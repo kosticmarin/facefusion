@@ -40,6 +40,8 @@ MALE_COUNTER = 0
 FEMALE_COUNTER = 0
 
 WORK_DIR = "./tmp"
+if not os.path.exists(WORK_DIR):
+    os.mkdir(WORK_DIR)
 
 
 def apply_args():
