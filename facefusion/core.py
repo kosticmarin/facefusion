@@ -15,7 +15,7 @@ from argparse import ArgumentParser, HelpFormatter
 import facefusion.choices
 import facefusion.globals
 from facefusion.face_analyser import get_one_face, get_average_face
-from facefusion.face_store import get_reference_faces, append_reference_face
+from facefusion.face_store import clear_reference_faces, get_reference_faces, append_reference_face
 from facefusion import face_analyser, face_masker, content_analyser, config, metadata, logger, wording
 from facefusion.content_analyser import analyse_image, analyse_video
 from facefusion.processors.frame.core import get_frame_processors_modules, load_frame_processor_module
@@ -250,22 +250,24 @@ def process_image(start_time : float) -> None:
 	if analyse_image(facefusion.globals.target_path):
 		return
 	shutil.copy2(facefusion.globals.target_path, facefusion.globals.output_path)
+	conditional_append_reference_faces()
 	# process frame
 	for frame_processor_module in get_frame_processors_modules(facefusion.globals.frame_processors):
-		logger.info(wording.get('processing'), frame_processor_module.NAME)
+		print(wording.get('processing'), frame_processor_module.NAME)
 		frame_processor_module.process_image(facefusion.globals.source_paths, facefusion.globals.output_path, facefusion.globals.output_path)
 		frame_processor_module.post_process()
 	# compress image
 	if compress_image(facefusion.globals.output_path):
-		logger.info(wording.get('compressing_image_succeed'), __name__.upper())
+		print(wording.get('compressing_image_succeed'), __name__.upper())
 	else:
 		logger.warn(wording.get('compressing_image_skipped'), __name__.upper())
 	# validate image
 	if is_image(facefusion.globals.output_path):
 		seconds = '{:.2f}'.format((time.time() - start_time) % 60)
-		logger.info(wording.get('processing_image_succeed').format(seconds = seconds), __name__.upper())
+		print(wording.get('processing_image_succeed').format(seconds = seconds), __name__.upper())
 	else:
-		logger.error(wording.get('processing_image_failed'), __name__.upper())
+		print(wording.get('processing_image_failed'), __name__.upper())
+	clear_reference_faces()
 
 
 def process_video(start_time : float) -> None:

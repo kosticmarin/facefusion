@@ -61,9 +61,10 @@ def apply_args():
     facefusion.globals.system_memory_limit = 0
     # face analyser
     facefusion.globals.face_analyser_order = "left-right"
-    facefusion.globals.face_analyser_age = facefusion.choices.face_analyser_ages
-    facefusion.globals.face_analyser_gender = facefusion.choices.face_analyser_genders
+    facefusion.globals.face_analyser_age = None
+    facefusion.globals.face_analyser_gender = None
     facefusion.globals.face_detector_model = "yoloface"
+    facefusion.globals.face_recognizer_model = "arcface_inswapper"
     facefusion.globals.face_detector_size = "640x640"
     facefusion.globals.face_detector_score = 0.5
 
@@ -79,8 +80,8 @@ def apply_args():
     facefusion.globals.face_mask_padding = normalize_padding([0, 0, 0, 0])
     facefusion.globals.face_mask_regions = facefusion.choices.face_mask_regions
     # frame extraction
-    facefusion.globals.trim_frame_start = 0  # TODO: maybe check
-    facefusion.globals.trim_frame_end = 0  # TODO: maybe check
+    facefusion.globals.trim_frame_start = None
+    facefusion.globals.trim_frame_end = None
     facefusion.globals.temp_frame_format = "jpg"
     facefusion.globals.temp_frame_quality = 100
     facefusion.globals.keep_temp = False
@@ -148,7 +149,7 @@ async def process_image(request: Request, gender: str, session_id: str):
     image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
     vision.write_image(image_path, frame=img)
     facefusion.globals.source_paths = [image_path]
-    facefusion.globals.output_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
+    facefusion.globals.output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
 
     if gender == "male":
         MALE_COUNTER += 1
