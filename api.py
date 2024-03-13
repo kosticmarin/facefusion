@@ -168,8 +168,6 @@ async def process_image(request: Request, gender: str, session_id: str):
 
     result_image = vision.read_image(facefusion.globals.output_path)
     rand_overlay = random.randint(0, len(TEMPLATES) - 1)
-    print(rand_overlay)
-    print(TEMPLATES[rand_overlay])
     overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
     final_image = add_overlay(result_image, overlay)
     _, enc_res = cv2.imencode(".jpg", final_image)
