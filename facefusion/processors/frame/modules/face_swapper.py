@@ -307,7 +307,7 @@ def process_frame(inputs : FaceSwapperInputs) -> VisionFrame:
 
 	if 'reference' in facefusion.globals.face_selector_mode:
 		similar_faces = find_similar_faces(reference_faces, target_vision_frame, facefusion.globals.reference_face_distance)
-		if similar_faces:
+		if similar_faces and source_face:
 			for similar_face in similar_faces:
 				target_vision_frame = swap_face(source_face, similar_face, target_vision_frame)
 	if 'one' in facefusion.globals.face_selector_mode:
