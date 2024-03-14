@@ -353,7 +353,7 @@ def process_image(source_paths : List[str], target_path : str, output_path : str
 	})
 	write_image(output_path, result_frame)
 
-def v2_process_image(source_frames, target_vision_frame, output_path):
+def v2_process_image(source_frames, target_vision_frame):
 	reference_faces = get_reference_faces() if 'reference' in facefusion.globals.face_selector_mode else None
 	source_face = get_average_face(source_frames)
 	result_frame = process_frame(

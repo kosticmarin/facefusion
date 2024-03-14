@@ -145,9 +145,9 @@ async def process_image(request: Request, gender: str, session_id: str):
     img_array = np.frombuffer(img_bytes, np.uint8)
     img = cv2.imdecode(img_array, flags=cv2.IMREAD_UNCHANGED)
 
-    image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
-    cv2.imwrite(image_path, img)
-    output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+    # image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
+    # cv2.imwrite(image_path, img)
+    # output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
     target_path = None
     if gender == "male":
         MALE_COUNTER += 1
@@ -162,11 +162,12 @@ async def process_image(request: Request, gender: str, session_id: str):
             status_code=400, detail="Gender query parameter can be 'male' or 'female'"
         )
 
+    target_frame = cv2.imread(target_path)
     print(f"Stat process image {session_id}")
-    result_image = core.v2_process_image([img], target_frame=cv2.imread(target_path), output_path=output_path)
+    result_image = core.v2_process_image([img], target_frame)
     print(f"End process image {session_id}")
 
-    cv2.imwrite(output_path, result_image)
+    # cv2.imwrite(output_path, result_image)
     # result_image = cv2.imread(output_path)
     # rand_overlay = random.randint(0, len(TEMPLATES) - 1)
     # overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)

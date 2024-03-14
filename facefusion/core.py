@@ -284,7 +284,7 @@ def process_image(start_time : float) -> None:
 		print(wording.get('processing_image_failed'), __name__.upper())
 	clear_reference_faces()
 
-def v2_process_image(source_frames, target_frame, output_path):
+def v2_process_image(source_frames, target_frame):
 	start_time = time.time()
 	if content_analyser.analyse_frame(target_frame):
 		return
@@ -292,7 +292,7 @@ def v2_process_image(source_frames, target_frame, output_path):
 	# process frame
 	for frame_processor_module in get_frame_processors_modules(facefusion.globals.frame_processors):
 		print(wording.get('processing'), frame_processor_module.NAME)
-		result_frame = frame_processor_module.v2_process_image(source_frames, target_frame, output_path)
+		result_frame = frame_processor_module.v2_process_image(source_frames, target_frame)
 		frame_processor_module.post_process()
 		# update target with previous output
 		target_frame = result_frame
