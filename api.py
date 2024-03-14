@@ -23,13 +23,11 @@ logger = logging.getLogger(__name__)
 
 MALE_TARGETS_DIR = os.environ.get("MALE_TARGETS_DIR", None)
 MALE_TARGETS = [
-    os.path.join(MALE_TARGETS_DIR, fname)
-    for fname in os.listdir(MALE_TARGETS_DIR)
+    os.path.join(MALE_TARGETS_DIR, fname) for fname in os.listdir(MALE_TARGETS_DIR)
 ]
 FEMALE_TARGETS_DIR = os.environ.get("FEMALE_TARGETS_DIR", None)
 FEMALE_TARGETS = [
-    os.path.join(FEMALE_TARGETS_DIR, fname)
-    for fname in os.listdir(FEMALE_TARGETS_DIR)
+    os.path.join(FEMALE_TARGETS_DIR, fname) for fname in os.listdir(FEMALE_TARGETS_DIR)
 ]
 
 TEMPLATES_DIR = os.environ.get("TEMPLATES_DIR", "/home/marin/guinness/Templates")
@@ -129,9 +127,16 @@ def add_overlay(background, overlay):
     overlay_rgb = overlay[:, :, :3]
     mask = alpha_channel / 255.0
     inv_mask = 1.0 - mask
-    background_rgb = background[:, :, :3]
+    background_rgb = cv2.resize(
+        background,
+        (overlay_rgb.shape[1] - 40, overlay_rgb.shape[0] - 40),
+        interpolation=cv2.INTER_LINEAR,
+    )
+    background_rgb = cv2.copyMakeBorder(
+        background_rgb, 20, 20, 20, 20, cv2.BORDER_CONSTANT, None, value=[0, 0, 0, 0]
+    )
     blended_rgb = overlay_rgb * mask[..., None] + background_rgb * inv_mask[..., None]
-    final_image = np.concatenate((blended_rgb, background[:, :, 3:]), axis=2)
+    final_image = np.concatenate((blended_rgb, background_rgb[:, :, 3:]), axis=2)
     return final_image
 
 
@@ -145,9 +150,9 @@ async def process_image(request: Request, gender: str, session_id: str):
     img_array = np.frombuffer(img_bytes, np.uint8)
     img = cv2.imdecode(img_array, flags=cv2.IMREAD_UNCHANGED)
 
-    # image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
-    # cv2.imwrite(image_path, img)
-    # output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+    # backup original image on disk
+    image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
+    cv2.imwrite(image_path, img)
     target_path = None
     if gender == "male":
         MALE_COUNTER += 1
@@ -167,19 +172,20 @@ async def process_image(request: Request, gender: str, session_id: str):
     result_image = core.v2_process_image([img], target_frame)
     print(f"End process image {session_id}")
 
-    # cv2.imwrite(output_path, result_image)
-    # result_image = cv2.imread(output_path)
-    # rand_overlay = random.randint(0, len(TEMPLATES) - 1)
-    # overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
-    # final_image = add_overlay(result_image, overlay)
-    _, enc_res = cv2.imencode(".jpg", result_image)
+    # backup result image on disk
+    output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+    cv2.imwrite(output_path, result_image)
+    rand_overlay = random.randint(0, len(TEMPLATES) - 1)
+    overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
+    final_image = add_overlay(result_image, overlay)
+    _, enc_res = cv2.imencode(".jpg", final_image)
     resp_bytes = enc_res.tobytes()
 
-    # url = f"https://apps.mobiusframe.com/api/session/{session_id}/blob"
-    # r = requests.post(
-    #     url=url,
-    #     data=resp_bytes,
-    #     headers={"Content-Type": "image/jpeg"},
-    # )
-    # print(f"{url} returned code:{r.status_code}, content: {r.content}")
+    url = f"https://apps.mobiusframe.com/api/session/{session_id}/blob"
+    r = requests.post(
+        url=url,
+        data=resp_bytes,
+        headers={"Content-Type": "image/jpeg"},
+    )
+    print(f"{url} returned code:{r.status_code}, content: {r.content}")
     return Response(content=resp_bytes, media_type="image/jpeg", status_code=200)
