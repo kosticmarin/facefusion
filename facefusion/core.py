@@ -292,22 +292,14 @@ def v2_process_image(source_frames, target_frame, output_path):
 	# process frame
 	for frame_processor_module in get_frame_processors_modules(facefusion.globals.frame_processors):
 		print(wording.get('processing'), frame_processor_module.NAME)
-		frame_processor_module.v2_process_image(source_frames, target_frame, output_path)
+		result_frame = frame_processor_module.v2_process_image(source_frames, target_frame, output_path)
 		frame_processor_module.post_process()
 		# update target with previous output
-		target_frame = cv2.imread(output_path)
-	# compress image
-	if compress_image(output_path):
-		print(wording.get('compressing_image_succeed'), __name__.upper())
-	else:
-		logger.warn(wording.get('compressing_image_skipped'), __name__.upper())
-	# validate image
-	if is_image(facefusion.globals.output_path):
-		seconds = '{:.2f}'.format((time.time() - start_time) % 60)
-		print(wording.get('processing_image_succeed').format(seconds = seconds), __name__.upper())
-	else:
-		print(wording.get('processing_image_failed'), __name__.upper())
+		target_frame = result_frame
+	seconds = '{:.2f}'.format((time.time() - start_time) % 60)
+	print(wording.get('processing_image_succeed').format(seconds = seconds), __name__.upper())
 	clear_reference_faces()
+	return target_frame
 
 
 def process_video(start_time : float) -> None:

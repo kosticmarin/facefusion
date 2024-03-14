@@ -147,32 +147,27 @@ async def process_image(request: Request, gender: str, session_id: str):
 
     image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
     cv2.imwrite(image_path, img)
-
-    # facefusion.globals.source_paths = [image_path]
     output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
-    # facefusion.globals.output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
-
     target_path = None
     if gender == "male":
         MALE_COUNTER += 1
         rand_target = MALE_COUNTER % len(MALE_TARGETS)
         target_path = MALE_TARGETS[rand_target]
-        # facefusion.globals.target_path = MALE_TARGETS[rand_target]
     elif gender == "female":
         FEMALE_COUNTER += 1
         rand_target = FEMALE_COUNTER % len(FEMALE_TARGETS)
         target_path = FEMALE_TARGETS[rand_target]
-        # facefusion.globals.target_path = FEMALE_TARGETS[rand_target]
     else:
         raise HTTPException(
             status_code=400, detail="Gender query parameter can be 'male' or 'female'"
         )
 
     print(f"Stat process image {session_id}")
-    core.v2_process_image([img], target_frame=cv2.imread(target_path), output_path=output_path)
+    result_image = core.v2_process_image([img], target_frame=cv2.imread(target_path), output_path=output_path)
     print(f"End process image {session_id}")
 
-    result_image = cv2.imread(output_path)
+    cv2.imwrite(output_path, result_image)
+    # result_image = cv2.imread(output_path)
     # rand_overlay = random.randint(0, len(TEMPLATES) - 1)
     # overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
     # final_image = add_overlay(result_image, overlay)

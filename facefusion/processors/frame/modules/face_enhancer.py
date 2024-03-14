@@ -282,7 +282,7 @@ def v2_process_image(source_frames, target_vision_frame, output_path):
 		'reference_faces': reference_faces,
 		'target_vision_frame': target_vision_frame
 	})
-	write_image(output_path, result_frame)
+	return result_frame
 
 def process_video(source_paths : List[str], temp_frame_paths : List[str]) -> None:
 	frame_processors.multi_process_frames(None, temp_frame_paths, process_frames)
