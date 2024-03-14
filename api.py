@@ -50,13 +50,12 @@ def apply_args():
     # execution
     facefusion.globals.execution_providers = [
         "CUDAExecutionProvider",
-        "CPUExecutionProvider",
     ]
     facefusion.globals.execution_thread_count = 4
     facefusion.globals.execution_queue_count = 1
     # memory
-    facefusion.globals.video_memory_strategy = "strict"
-    facefusion.globals.system_memory_limit = 0
+    facefusion.globals.video_memory_strategy = "tolerant"
+    facefusion.globals.system_memory_limit = 12
     # face analyser
     facefusion.globals.face_analyser_order = "large-small"
     facefusion.globals.face_analyser_age = None
@@ -81,7 +80,7 @@ def apply_args():
     facefusion.globals.trim_frame_start = None
     facefusion.globals.trim_frame_end = None
     facefusion.globals.temp_frame_format = "jpg"
-    facefusion.globals.temp_frame_quality = 100
+    facefusion.globals.temp_frame_quality = 80
     facefusion.globals.keep_temp = False
     # output creation
     facefusion.globals.output_image_quality = 100
@@ -147,30 +146,33 @@ async def process_image(request: Request, gender: str, session_id: str):
     img = cv2.imdecode(img_array, flags=cv2.IMREAD_UNCHANGED)
 
     image_path = os.path.join(WORK_DIR, f"{session_id}.jpg")
-    vision.write_image(image_path, frame=img)
-    facefusion.globals.source_paths = [image_path]
-    facefusion.globals.output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+    cv2.imwrite(image_path, img)
 
+    # facefusion.globals.source_paths = [image_path]
+    output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+    # facefusion.globals.output_path = os.path.join(WORK_DIR, f"{session_id}_out.jpg")
+
+    target_path = None
     if gender == "male":
         MALE_COUNTER += 1
         rand_target = MALE_COUNTER % len(MALE_TARGETS)
-        facefusion.globals.target_path = MALE_TARGETS[rand_target]
+        target_path = MALE_TARGETS[rand_target]
+        # facefusion.globals.target_path = MALE_TARGETS[rand_target]
     elif gender == "female":
         FEMALE_COUNTER += 1
         rand_target = FEMALE_COUNTER % len(FEMALE_TARGETS)
-        facefusion.globals.target_path = FEMALE_TARGETS[rand_target]
+        target_path = FEMALE_TARGETS[rand_target]
+        # facefusion.globals.target_path = FEMALE_TARGETS[rand_target]
     else:
         raise HTTPException(
             status_code=400, detail="Gender query parameter can be 'male' or 'female'"
         )
 
-    start_time = time.time()
-
     print(f"Stat process image {session_id}")
-    core.process_image(start_time)
+    core.v2_process_image([img], target_frame=cv2.imread(target_path), output_path=output_path)
     print(f"End process image {session_id}")
 
-    result_image = vision.read_image(facefusion.globals.output_path)
+    result_image = cv2.imread(output_path)
     # rand_overlay = random.randint(0, len(TEMPLATES) - 1)
     # overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
     # final_image = add_overlay(result_image, overlay)

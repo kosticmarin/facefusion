@@ -1,5 +1,7 @@
 import os
 
+import cv2
+
 os.environ['OMP_NUM_THREADS'] = '1'
 
 import signal
@@ -245,6 +247,19 @@ def conditional_append_reference_faces() -> None:
 					reference_face = get_one_face(reference_frame, facefusion.globals.reference_face_position)
 					append_reference_face(frame_processor_module.__name__, reference_face)
 
+def v2_conditional_append_reference_faces(source_frames, reference_frame) -> None:
+	if 'reference' in facefusion.globals.face_selector_mode and not get_reference_faces():
+		source_face = get_average_face(source_frames)
+		reference_face = get_one_face(reference_frame, facefusion.globals.reference_face_position)
+		append_reference_face('origin', reference_face)
+		if source_face and reference_face:
+			for frame_processor_module in get_frame_processors_modules(facefusion.globals.frame_processors):
+				abstract_reference_frame = frame_processor_module.get_reference_frame(source_face, reference_face, reference_frame)
+				if numpy.any(abstract_reference_frame):
+					reference_frame = abstract_reference_frame
+					reference_face = get_one_face(reference_frame, facefusion.globals.reference_face_position)
+					append_reference_face(frame_processor_module.__name__, reference_face)
+
 
 def process_image(start_time : float) -> None:
 	if analyse_image(facefusion.globals.target_path):
@@ -258,6 +273,31 @@ def process_image(start_time : float) -> None:
 		frame_processor_module.post_process()
 	# compress image
 	if compress_image(facefusion.globals.output_path):
+		print(wording.get('compressing_image_succeed'), __name__.upper())
+	else:
+		logger.warn(wording.get('compressing_image_skipped'), __name__.upper())
+	# validate image
+	if is_image(facefusion.globals.output_path):
+		seconds = '{:.2f}'.format((time.time() - start_time) % 60)
+		print(wording.get('processing_image_succeed').format(seconds = seconds), __name__.upper())
+	else:
+		print(wording.get('processing_image_failed'), __name__.upper())
+	clear_reference_faces()
+
+def v2_process_image(source_frames, target_frame, output_path):
+	start_time = time.time()
+	if content_analyser.analyse_frame(target_frame):
+		return
+	v2_conditional_append_reference_faces(source_frames, target_frame)
+	# process frame
+	for frame_processor_module in get_frame_processors_modules(facefusion.globals.frame_processors):
+		print(wording.get('processing'), frame_processor_module.NAME)
+		frame_processor_module.v2_process_image(source_frames, target_frame, output_path)
+		frame_processor_module.post_process()
+		# update target with previous output
+		target_frame = cv2.imread(output_path)
+	# compress image
+	if compress_image(output_path):
 		print(wording.get('compressing_image_succeed'), __name__.upper())
 	else:
 		logger.warn(wording.get('compressing_image_skipped'), __name__.upper())
