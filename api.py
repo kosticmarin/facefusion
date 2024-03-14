@@ -22,19 +22,18 @@ from facefusion.processors.frame.core import get_frame_processors_modules
 
 logger = logging.getLogger(__name__)
 
-ROOT_DIR = os.environ.get("ROOT_DIR", "/home/marin")
-TARGETS_DIR = f"{ROOT_DIR}/FakeIt/Stable Diffusion images/"
+TARGETS_DIR = os.environ.get("TARGETS_DIR", "/home/marin/guinness/Target")
 GENDER_DIRS = os.listdir(TARGETS_DIR)
 MALE_TARGETS = [
-    os.path.join(TARGETS_DIR, GENDER_DIRS[0], fname)
+    os.path.join(TARGETS_DIR, GENDER_DIRS[0] if GENDER_DIRS[0].lower() == "male" else GENDER_DIRS[1], fname)
     for fname in os.listdir(os.path.join(TARGETS_DIR, GENDER_DIRS[0]))
 ]
 FEMALE_TARGETS = [
-    os.path.join(TARGETS_DIR, GENDER_DIRS[1], fname)
+    os.path.join(TARGETS_DIR, GENDER_DIRS[1] if GENDER_DIRS[1].lower() == "female" else GENDER_DIRS[0], fname)
     for fname in os.listdir(os.path.join(TARGETS_DIR, GENDER_DIRS[1]))
 ]
 
-TEMPLATES_DIR = f"{ROOT_DIR}/FakeIt/Naslovnice"
+TEMPLATES_DIR = os.environ.get("TEMPLATES_DIR", "/home/marin/guinness/Templates")
 TEMPLATES = [os.path.join(TEMPLATES_DIR, fname) for fname in os.listdir(TEMPLATES_DIR)]
 MALE_COUNTER = 0
 FEMALE_COUNTER = 0
@@ -46,7 +45,7 @@ if not os.path.exists(WORK_DIR):
 
 def apply_args():
     # misc
-    facefusion.globals.skip_download = False
+    facefusion.globals.skip_download = os.environ.get("SKIP_DOWNLOAD", True)
     facefusion.globals.headless = True
     facefusion.globals.log_level = "info"
     # execution
@@ -142,7 +141,9 @@ def add_overlay(background, overlay):
 async def process_image(request: Request, gender: str, session_id: str):
     global MALE_COUNTER
     global FEMALE_COUNTER
+    print(f"Request {session_id}")
     img_bytes = await request.body()
+    print(f"Request body {len(img_bytes)}")
     img_array = np.frombuffer(img_bytes, np.uint8)
     img = cv2.imdecode(img_array, flags=cv2.IMREAD_UNCHANGED)
 
@@ -165,13 +166,16 @@ async def process_image(request: Request, gender: str, session_id: str):
         )
 
     start_time = time.time()
+
+    print(f"Stat process image {session_id}")
     core.process_image(start_time)
+    print(f"End process image {session_id}")
 
     result_image = vision.read_image(facefusion.globals.output_path)
-    rand_overlay = random.randint(0, len(TEMPLATES) - 1)
-    overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
-    final_image = add_overlay(result_image, overlay)
-    _, enc_res = cv2.imencode(".jpg", final_image)
+    # rand_overlay = random.randint(0, len(TEMPLATES) - 1)
+    # overlay = cv2.imread(TEMPLATES[rand_overlay], cv2.IMREAD_UNCHANGED)
+    # final_image = add_overlay(result_image, overlay)
+    _, enc_res = cv2.imencode(".jpg", result_image)
     resp_bytes = enc_res.tobytes()
 
     # url = f"https://apps.mobiusframe.com/api/session/{session_id}/blob"
