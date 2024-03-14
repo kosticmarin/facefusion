@@ -1,7 +1,6 @@
 import logging
 import os
 import random
-import tempfile
 import time
 from contextlib import asynccontextmanager
 
@@ -22,15 +21,15 @@ from facefusion.processors.frame.core import get_frame_processors_modules
 
 logger = logging.getLogger(__name__)
 
-TARGETS_DIR = os.environ.get("TARGETS_DIR", "/home/marin/guinness/Target")
-GENDER_DIRS = os.listdir(TARGETS_DIR)
+MALE_TARGETS_DIR = os.environ.get("MALE_TARGETS_DIR", None)
 MALE_TARGETS = [
-    os.path.join(TARGETS_DIR, GENDER_DIRS[0] if GENDER_DIRS[0].lower() == "male" else GENDER_DIRS[1], fname)
-    for fname in os.listdir(os.path.join(TARGETS_DIR, GENDER_DIRS[0]))
+    os.path.join(MALE_TARGETS_DIR, fname)
+    for fname in os.listdir(MALE_TARGETS_DIR)
 ]
+FEMALE_TARGETS_DIR = os.environ.get("FEMALE_TARGETS_DIR", None)
 FEMALE_TARGETS = [
-    os.path.join(TARGETS_DIR, GENDER_DIRS[1] if GENDER_DIRS[1].lower() == "female" else GENDER_DIRS[0], fname)
-    for fname in os.listdir(os.path.join(TARGETS_DIR, GENDER_DIRS[1]))
+    os.path.join(FEMALE_TARGETS_DIR, fname)
+    for fname in os.listdir(FEMALE_TARGETS_DIR)
 ]
 
 TEMPLATES_DIR = os.environ.get("TEMPLATES_DIR", "/home/marin/guinness/Templates")
@@ -59,7 +58,7 @@ def apply_args():
     facefusion.globals.video_memory_strategy = "strict"
     facefusion.globals.system_memory_limit = 0
     # face analyser
-    facefusion.globals.face_analyser_order = "left-right"
+    facefusion.globals.face_analyser_order = "large-small"
     facefusion.globals.face_analyser_age = None
     facefusion.globals.face_analyser_gender = None
     facefusion.globals.face_detector_model = "yoloface"
