@@ -19,7 +19,7 @@ HOSTNAME = socket.gethostname()
 def ws_connect():
 	logger.info("Connecting to ws server: {MOBIUS_SERVER}...")
 	if "https" in MOBIUS_SERVER:
-		ws_url = MOBIUS_SERVER.replace("https", "wss)
+		ws_url = MOBIUS_SERVER.replace("https", "wss")
 	else:
 		ws_url = MOBIUS_SERVER.replace("http", "ws")
 	with connect(f"{MOBIUS_SERVER}/api/ai/register?hostname={HOSTNAME}") as socket:
